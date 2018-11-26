@@ -303,18 +303,3 @@ EigenArray solve_trimateigen(Context *ctx)
         .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL
     };
 }
-
-
-
-int main (int argc, char **argv)
-{
-    int i = 10;
-    double alpha[10] = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9};
-    double beta[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double low_bound = -4.0;
-    double up_bound = 4.0;
-    Context ctx = {.order = i, .alpha = &alpha[0], .beta = &beta[0], .low_bound = low_bound, .up_bound = up_bound, .tol = -1.0};
-    EigenArray result = solve_trimateigen(&ctx);
-    print_EigenArray(&result);
-    free_EigenArray(&result);
-}
