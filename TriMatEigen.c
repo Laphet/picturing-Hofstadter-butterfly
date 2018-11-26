@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-
-#define EPSILON 1.0e-7
-#define TOL 1.0e-12
+#include "TriMatEigen.h"
 
 typedef struct OpenInterval
 {
@@ -11,15 +6,6 @@ typedef struct OpenInterval
     double b;
 } OpenInterval;
 
-typedef struct Context
-{
-    int order;
-    double low_bound;
-    double up_bound;
-    double tol; //default -1.0
-    double* alpha;
-    double* beta;
-} Context;
 
 typedef struct DetEvl
 {
@@ -28,13 +14,6 @@ typedef struct DetEvl
     int count;
 } DetEvl;
 
-typedef struct EigenArray
-{
-    int total_size;
-    int used_size;
-    double *data;
-    int *eigenvalue_index;
-} EigenArray;
 
 void free_EigenArray(EigenArray *e)
 {
@@ -329,9 +308,9 @@ EigenArray solve_trimateigen(Context *ctx)
 
 int main (int argc, char **argv)
 {
-    int i = 5;
-    double alpha[5] = {1.0, 1.1, 1.2, 1.3, 1.4};
-    double beta[4] = {1.0, 1.0, 1.0, 1.0};
+    int i = 10;
+    double alpha[10] = {1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9};
+    double beta[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double low_bound = -4.0;
     double up_bound = 4.0;
     Context ctx = {.order = i, .alpha = &alpha[0], .beta = &beta[0], .low_bound = low_bound, .up_bound = up_bound, .tol = -1.0};
