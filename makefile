@@ -1,6 +1,6 @@
 default: TriMatEigen
 
-CFLAGS=
+CFLAGS=-g -Wall
 LDFLAGS=
 LDLIBS=-lm
 
