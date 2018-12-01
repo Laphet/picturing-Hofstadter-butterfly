@@ -29,9 +29,11 @@ void free_EigenArray(EigenArray*);
 
 void print_EigenArray(EigenArray*);
 
+void write_EigenArray(FILE*, EigenArray*);
+
 EigenArray get_merged_eigenvalues(EigenArray*, EigenArray*);
 
-EigenArray get_eigenvalues(EigenArray*, Context*);
+void get_eigenvalues(EigenArray*, Context*);
 
 EigenArray solve_trimateigen(Context*);
 
