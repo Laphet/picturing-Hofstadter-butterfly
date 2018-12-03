@@ -1,10 +1,11 @@
 #include "TriMatEigen_omp.h"
+#include <time.h>
 
 int main()
 {
     double *alpha;
     double *beta;
-    int k = 4, i;
+    int k = 1600, i, groups = 3;
     alpha = (double *)malloc(k * sizeof(double));
     beta = (double *)malloc((k - 1) * sizeof(double));
     for (i = 0; i < k; ++i)
@@ -13,11 +14,14 @@ int main()
         if (i < k - 1) beta[i] = 1.0;
     }
     Context ctx = {.order = k, .low_bound = -4.0, .up_bound = 4.0, .tol = -1.0, .alpha = &alpha[0], .beta = &beta[0]};
-    EigenArray eigens = solve_trimateigen(&ctx);
+    clock_t start = clock();
+    EigenArray eigens = solve_trimateigen_omp(groups, &ctx);
+    clock_t end = clock();
     //FILE* f = fopen("test.dat", "w+");
     //write_EigenArray(f, &eigens);
     //fclose(f);
-    print_EigenArray(&eigens);
+    //print_EigenArray(&eigens);
+    printf("Using divide-conquer algorithm to solve n=%d tridiagonal matrix consumes time %fs", k, (double)(end - start) / CLOCKS_PER_SEC);
     free_EigenArray(&eigens);
     free(alpha);
     free(beta);
