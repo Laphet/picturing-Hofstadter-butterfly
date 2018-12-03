@@ -1,6 +1,6 @@
 default: test
 
-CFLAGS=-g -Wall -fopenmp
+CFLAGS=-Wall -O3
 LDFLAGS=
 LDLIBS=-lm
 
