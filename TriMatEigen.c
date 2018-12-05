@@ -1,4 +1,5 @@
 #include "TriMatEigen.h"
+#include "omp.h"
 
 typedef struct OpenInterval
 {
@@ -18,7 +19,7 @@ typedef struct DetEvl
 void free_EigenArray(EigenArray *e)
 {
     free(e->data);
-    free(e->eigenvalue_index);
+    if (e->eigenvalue_index != NULL)free(e->eigenvalue_index);
 }
 
 void print_EigenArray(EigenArray *e)
@@ -230,11 +231,12 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
     int eigenvalues_count = index_up_bound - index_low_bound;
     int i;
     double *eigens = (double *)malloc(eigenvalues_count * sizeof(double));
-    double x;
     DetEvl det_evl_output;
     OpenInterval interval;
+//    #pragma omp parallel for
     for (i = index_low_bound; i < index_up_bound; ++i)
     {
+        double x;
         interval = get_interval(i, lambdas_, ctx);
         while (1)
         {
@@ -261,6 +263,9 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
                 break;
             }
         }
+        //int ID = omp_get_thread_num();
+        //printf("thread is %d\n", ID);
+
     }
     free_EigenArray(lambdas_);
     lambdas_->total_size = eigenvalues_count;
@@ -292,7 +297,19 @@ EigenArray solve_trimateigen(Context *ctx)
             .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL
         };
     }
-    if (ctx->order > 2)
+    if (3 <= ctx->order && ctx->order <= LAPACK_SOLVER_ORDER)
+    {
+        eigens = (double *)malloc(sizeof(double) * ctx->order);
+        double *off_diagonal = (double *)malloc(sizeof(double) * (ctx->order - 1));
+        memcpy(eigens, ctx->alpha, ctx->order * sizeof(double));
+        memcpy(off_diagonal, ctx->beta, (ctx->order - 1)*sizeof(double));
+        LAPACKE_dsterf(ctx->order, eigens, off_diagonal);
+        return (EigenArray)
+        {
+            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL
+        };
+    }
+    if (ctx->order > LAPACK_SOLVER_ORDER)
     {
         int n = ctx->order;
         Context ctx_child0 =

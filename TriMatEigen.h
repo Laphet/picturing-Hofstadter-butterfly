@@ -3,9 +3,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include "mkl.h"
 
 #define EPSILON 1.0e-7
 #define TOL 1.0e-12
+#define LAPACK_SOLVER_ORDER 16
 
 typedef struct Context
 {
