@@ -35,9 +35,9 @@ int main(int argc, char** argv)
     //fclose(f);
     //print_EigenArray(&eigens);
     if (is_use_omp)
-        printf("\nUsing divide-conquer algorithm openMP version to solve the eigenvalues of a n=%d tridiagonal matrix consumes time %fs", k, (double)(end - start) / CLOCKS_PER_SEC);
+        printf("\nUsing divide-conquer algorithm openMP version to solve the eigenvalues of a n=%d tridiagonal matrix consumes time %fs\n", k, (double)(end - start) / CLOCKS_PER_SEC);
     else
-        printf("\nUsing divide-conquer algorithm version to solve the eigenvalues of a n=%d tridiagonal matrix consumes time %fs", k, (double)(end - start) / CLOCKS_PER_SEC);
+        printf("\nUsing divide-conquer algorithm version to solve the eigenvalues of a n=%d tridiagonal matrix consumes time %fs\n", k, (double)(end - start) / CLOCKS_PER_SEC);
     free_EigenArray(&eigens);
     free(alpha);
     free(beta);

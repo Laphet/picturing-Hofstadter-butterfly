@@ -39,6 +39,7 @@ EigenArray solve_trimateigen_omp(int groups, Context *ctx)
         }
 
         for (i = 1; i < groups; i = 2 * i)
+            #pragma omp parallel for
             for (j = i; j < groups; j = j + (2 * i))
             {
                 eigens_list[j - i] = get_merged_eigenvalues(&eigens_list[j - i], &eigens_list[j]);
