@@ -1,4 +1,4 @@
-default: test
+default: PicHofButterfly
 
 MKLPATH=$(MKLROOT)/lib/intel64_lin
 MKLINCLUDE=$(MKLROOT)/include
@@ -14,6 +14,8 @@ TriMatEigen_omp.o: TriMatEigen_omp.c
 test: TriMatEigen.o TriMatEigen_omp.o test.c
 
 lapacke_test: lapacke_test.c
+
+PicHofButterfly: PicHofButterfly.c
 
 clean:
 	rm -f *.o
