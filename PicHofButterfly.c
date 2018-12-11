@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <time.h>
+#include <sys/time.h>
 #include "omp.h"
 
 void save_data(FILE* f, int k, int l)
@@ -35,7 +35,7 @@ void save_data(FILE* f, int k, int l)
 
 double get_consumed_time(int k, int l)
 {
-    clock_t start, end;
+    struct timeval start, end;
     double* e = (double *)malloc((2 * k + 1) * l * sizeof(double));
     double* off_diag = (double *)malloc(2 * k * l * sizeof(double));
     double delta_alpha = 1.0 / (double) (l + 1);
@@ -47,17 +47,18 @@ double get_consumed_time(int k, int l)
         for (i = 0; i < 2 * k; ++i)
             off_diag[j * 2 * k + i] = 1.0;
     }
-    start = clock();
+    gettimeofday(&start, NULL);
     #pragma omp parallel for
     for (j = 0; j < l; ++j)
     {
         LAPACKE_dsterf(2 * k + 1, &e[j * (2 * k + 1)], &off_diag[j * 2 * k]);
 
     }
-    end = clock();
+    gettimeofday(&end, NULL);
     free(e);
     free(off_diag);
-    return (double)(end - start) / CLOCKS_PER_SEC;
+    return (double)((end.tv_sec  - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
 }
 
 int main(int argc, char** argv)
