@@ -1,5 +1,4 @@
 #include "TriMatEigen.h"
-#include "omp.h"
 
 typedef struct OpenInterval
 {
@@ -233,7 +232,6 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
     double *eigens = (double *)malloc(eigenvalues_count * sizeof(double));
     DetEvl det_evl_output;
     OpenInterval interval;
-//    #pragma omp parallel for
     for (i = index_low_bound; i < index_up_bound; ++i)
     {
         double x;
@@ -266,6 +264,53 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
         //int ID = omp_get_thread_num();
         //printf("thread is %d\n", ID);
 
+    }
+    free_EigenArray(lambdas_);
+    lambdas_->total_size = eigenvalues_count;
+    lambdas_->used_size = i;
+    lambdas_->data = eigens;
+    lambdas_->eigenvalue_index = NULL;
+}
+
+void get_eigenvalues_omp(EigenArray *lambdas_, Context *ctx)
+{
+    int index_low_bound = get_low_eigenvalues_count(ctx->low_bound - TOL, ctx),
+        index_up_bound = get_low_eigenvalues_count(ctx->up_bound + TOL, ctx);
+    int eigenvalues_count = index_up_bound - index_low_bound;
+    int i;
+    double *eigens = (double *)malloc(eigenvalues_count * sizeof(double));
+    DetEvl det_evl_output;
+    OpenInterval interval;
+    #pragma omp parallel for
+    for (i = index_low_bound; i < index_up_bound; ++i)
+    {
+        double x;
+        interval = get_interval(i, lambdas_, ctx);
+        while (1)
+        {
+
+            if  (fabs(interval.b - interval.a) > TOL)
+            {
+
+                x = 0.5 * (interval.a + interval.b);
+                det_evl_output = get_sturm_sequence(x, ctx);
+                if (det_evl_output.count <= i)
+                    interval.a = x;
+                else
+                    interval.b = x;
+                if ((det_evl_output.count == i && det_evl_output.df > 0.0) ||
+                        ( det_evl_output.count == i + 1 && det_evl_output.df < 0.0))
+                {
+                    eigens[i - index_low_bound] = get_ith_eigenvalue(i, x, ctx);
+                    break;
+                }
+            }
+            else
+            {
+                eigens[i - index_low_bound] = 0.5 * (interval.a + interval.b);
+                break;
+            }
+        }
     }
     free_EigenArray(lambdas_);
     lambdas_->total_size = eigenvalues_count;
@@ -328,6 +373,69 @@ EigenArray solve_trimateigen(Context *ctx)
         free_EigenArray(&lambda0);
         free_EigenArray(&lambda1);
         get_eigenvalues(&lambdas_, ctx);
+        return lambdas_;
+    }
+    printf("Error: ~");
+    return (EigenArray)
+    {
+        .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL
+    };
+}
+
+EigenArray solve_trimateigen_omp(Context *ctx)
+{
+    double *eigens;
+    if (ctx->order == 1)
+    {
+        eigens = (double *)malloc(sizeof(double));
+        eigens[0] = ctx->alpha[0];
+        return (EigenArray)
+        {
+            .total_size = 1, .used_size = 1, .data = eigens, .eigenvalue_index = NULL
+        };
+    }
+    if (ctx->order == 2)
+    {
+        double a0 = ctx->alpha[0], a1 = ctx->alpha[1], b0 = ctx->beta[0];
+        eigens = (double *)malloc(2 * sizeof(double));
+        eigens[0] = 0.5 * (a0 + a1) - 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
+        eigens[1] = 0.5 * (a0 + a1) + 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
+        return (EigenArray)
+        {
+            .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL
+        };
+    }
+    if (3 <= ctx->order && ctx->order <= LAPACK_SOLVER_ORDER)
+    {
+        eigens = (double *)malloc(sizeof(double) * ctx->order);
+        double *off_diagonal = (double *)malloc(sizeof(double) * (ctx->order - 1));
+        memcpy(eigens, ctx->alpha, ctx->order * sizeof(double));
+        memcpy(off_diagonal, ctx->beta, (ctx->order - 1)*sizeof(double));
+        LAPACKE_dsterf(ctx->order, eigens, off_diagonal);
+        return (EigenArray)
+        {
+            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL
+        };
+    }
+    if (ctx->order > LAPACK_SOLVER_ORDER)
+    {
+        int n = ctx->order;
+        Context ctx_child0 =
+        {
+            .order = n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
+            .alpha = &ctx->alpha[0],
+            .beta = n / 2 > 1 ? &ctx->beta[0] : NULL
+        };
+        Context ctx_child1 = {.order = n - n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
+                              .alpha = &ctx->alpha[n / 2],
+                              .beta = &ctx->beta[n / 2]
+                             };
+        EigenArray lambda0 = solve_trimateigen(&ctx_child0);
+        EigenArray lambda1 = solve_trimateigen(&ctx_child1);
+        EigenArray lambdas_ = get_merged_eigenvalues(&lambda0, &lambda1);
+        free_EigenArray(&lambda0);
+        free_EigenArray(&lambda1);
+        get_eigenvalues_omp(&lambdas_, ctx);
         return lambdas_;
     }
     printf("Error: ~");

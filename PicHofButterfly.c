@@ -8,18 +8,21 @@
 void save_data(FILE* f, int k, int l)
 {
     double* e = (double *)malloc((2 * k + 1) * l * sizeof(double));
-    double* off_diag = (double *)malloc(2 * k * sizeof(double));
-    double delta_alpha = 1.0 / (double)(l + 1);
+    double* off_diag = (double *)malloc(2 * k * l * sizeof(double));
+    double delta_alpha = 1.0 / (double) (l + 1);
     int i, j;
-
-    for (j = 0; j < l; ++j)
-        for (i = -k; i <= k; ++i)
-            e[j * (2 * k + 1) + i + k] = 2.0 * cos(2.0 * M_PI * (double)i * (double)(j + 1) * delta_alpha);
-
     for (j = 0; j < l; ++j)
     {
-        for (i = 0; i < 2 * k; ++i) off_diag[i] = 1.0;
-        LAPACKE_dsterf(2 * k + 1, &e[j * (2 * k + 1)], off_diag);
+        for (i = -k; i <= k; ++i)
+            e[j * (2 * k + 1) + i + k] = 2.0 * cos(2.0 * M_PI * (double)i * (double)(j + 1) * delta_alpha);
+        for (i = 0; i < 2 * k; ++i)
+            off_diag[j * 2 * k + i] = 1.0;
+    }
+    #pragma omp parallel for
+    for (j = 0; j < l; ++j)
+    {
+        LAPACKE_dsterf(2 * k + 1, &e[j * (2 * k + 1)], &off_diag[j * 2 * k]);
+
     }
 
     double alpha;
@@ -69,14 +72,14 @@ int main(int argc, char** argv)
         k = atoi(argv[1]);
         l = atoi(argv[2]);
     }
-    //FILE *f = fopen("data.csv", "w+");
-    //save_data(f, k, l);
-    //fclose(f);
-    printf("%.6f\n", get_consumed_time(k, l));
-    int num_threads;
-    #pragma omp parallel
-    {
-        num_threads = omp_get_num_threads();
-    }
-    printf("%d\n", num_threads);
+    FILE *f = fopen("data.csv", "w+");
+    save_data(f, k, l);
+    fclose(f);
+    //printf("%.6f\n", get_consumed_time(k, l));
+    //int num_threads;
+    //#pragma omp parallel
+    //{
+    //    num_threads = omp_get_num_threads();
+    //}
+    //printf("%d\n", num_threads);
 }

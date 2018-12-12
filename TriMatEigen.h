@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
 #include "mkl.h"
 
 #define EPSILON 1.0e-7
@@ -38,6 +39,10 @@ EigenArray get_merged_eigenvalues(EigenArray*, EigenArray*);
 
 void get_eigenvalues(EigenArray*, Context*);
 
+void get_eigenvalues_omp(EigenArray*, Context*);
+
 EigenArray solve_trimateigen(Context*);
+
+EigenArray solve_trimateigen_omp(Context*);
 
 #endif

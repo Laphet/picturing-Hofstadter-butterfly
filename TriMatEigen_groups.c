@@ -1,7 +1,6 @@
-#include "TriMatEigen_omp.h"
-#include <time.h>
+#include "TriMatEigen_groups.h"
 
-EigenArray solve_trimateigen_omp(int groups, Context *ctx)
+EigenArray solve_trimateigen_groups(int groups, Context *ctx)
 {
     int k = ctx->order / groups, r = ctx->order % groups, i, j;
     if (k > 0)
@@ -11,7 +10,6 @@ EigenArray solve_trimateigen_omp(int groups, Context *ctx)
         #pragma omp parallel for
         for (i = 0; i < groups; ++i)
         {
-            //int ID = omp_get_thread_num();
             Context ctx_local;
             if (i == 0)
             {
@@ -31,21 +29,17 @@ EigenArray solve_trimateigen_omp(int groups, Context *ctx)
                     .beta = (i * k + r - 1 < ctx->order - 1) ? &(ctx->beta[i * k + r - 1]) : NULL
                 };
             }
-            //clock_t start = clock();
             eigens_list[i] = solve_trimateigen(&ctx_local);
-            //clock_t end = clock();
-            //printf("thread %d at leaf %d uses time %f\n", ID, i, (double)(end - start) / CLOCKS_PER_SEC);
             ctx_list[i] = ctx_local;
         }
 
         for (i = 1; i < groups; i = 2 * i)
-            #pragma omp parallel for
             for (j = i; j < groups; j = j + (2 * i))
             {
                 eigens_list[j - i] = get_merged_eigenvalues(&eigens_list[j - i], &eigens_list[j]);
                 ctx_list[j - i].order = ctx_list[j - i].order + ctx_list[j].order;
                 ctx_list[j - i].tol = -1.0;
-                get_eigenvalues(&eigens_list[j - i], &ctx_list[j - i]);
+                get_eigenvalues_omp(&eigens_list[j - i], &ctx_list[j - i]);
             }
 
         #pragma omp parallel for
