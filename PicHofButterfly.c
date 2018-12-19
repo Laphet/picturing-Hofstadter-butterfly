@@ -5,11 +5,11 @@
 #include <sys/time.h>
 #include "omp.h"
 
-void save_data(FILE* f, int k, int l)
+void save_data(FILE *f, int k, int l)
 {
-    double* e = (double *)malloc((2 * k + 1) * l * sizeof(double));
-    double* off_diag = (double *)malloc(2 * k * l * sizeof(double));
-    double delta_alpha = 1.0 / (double) (l + 1);
+    double *e = (double *)malloc((2 * k + 1) * l * sizeof(double));
+    double *off_diag = (double *)malloc(2 * k * l * sizeof(double));
+    double delta_alpha = 1.0 / (double)(l + 1);
     int i, j;
     for (j = 0; j < l; ++j)
     {
@@ -18,17 +18,16 @@ void save_data(FILE* f, int k, int l)
         for (i = 0; i < 2 * k; ++i)
             off_diag[j * 2 * k + i] = 1.0;
     }
-    #pragma omp parallel for
+#pragma omp parallel for
     for (j = 0; j < l; ++j)
     {
         LAPACKE_dsterf(2 * k + 1, &e[j * (2 * k + 1)], &off_diag[j * 2 * k]);
-
     }
 
     double alpha;
     for (j = 0; j < l; ++j)
     {
-        alpha = delta_alpha * (double) (j + 1);
+        alpha = delta_alpha * (double)(j + 1);
         for (i = 0; i < 2 * k + 1; ++i)
             fprintf(f, "%.8f,%.8f\n", e[j * (2 * k + 1) + i], alpha);
     }
@@ -39,9 +38,9 @@ void save_data(FILE* f, int k, int l)
 double get_consumed_time(int k, int l)
 {
     struct timeval start, end;
-    double* e = (double *)malloc((2 * k + 1) * l * sizeof(double));
-    double* off_diag = (double *)malloc(2 * k * l * sizeof(double));
-    double delta_alpha = 1.0 / (double) (l + 1);
+    double *e = (double *)malloc((2 * k + 1) * l * sizeof(double));
+    double *off_diag = (double *)malloc(2 * k * l * sizeof(double));
+    double delta_alpha = 1.0 / (double)(l + 1);
     int i, j;
     for (j = 0; j < l; ++j)
     {
@@ -51,20 +50,20 @@ double get_consumed_time(int k, int l)
             off_diag[j * 2 * k + i] = 1.0;
     }
     gettimeofday(&start, NULL);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (j = 0; j < l; ++j)
     {
         LAPACKE_dsterf(2 * k + 1, &e[j * (2 * k + 1)], &off_diag[j * 2 * k]);
-
     }
     gettimeofday(&end, NULL);
     free(e);
     free(off_diag);
-    return (double)((end.tv_sec  - start.tv_sec) * 1000000u +
-                    end.tv_usec - start.tv_usec) / 1.e6;
+    return (double)((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) /
+           1.e6;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int k = 1024, l = 1024;
     if (argc == 3)

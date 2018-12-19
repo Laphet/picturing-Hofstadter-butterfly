@@ -1,7 +1,7 @@
 #include "TriMatEigen_groups.h"
 #include <sys/time.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     double *alpha;
     double *beta;
@@ -10,8 +10,10 @@ int main(int argc, char** argv)
     if (argc > 1)
     {
         option = *argv[1];
-        if (argc > 2) groups = atoi(argv[2]);
-        if (argc > 3) k = atoi(argv[3]);
+        if (argc > 2)
+            groups = atoi(argv[2]);
+        if (argc > 3)
+            k = atoi(argv[3]);
     }
 
     alpha = (double *)malloc((2 * k + 1) * sizeof(double));
@@ -19,13 +21,14 @@ int main(int argc, char** argv)
     for (i = 0; i < 2 * k + 1; ++i)
     {
         alpha[i] = 2.0 * cos(2.0 * M_PI * (double)(i - k) * 0.34);
-        if (i < 2 * k) beta[i] = 1.0;
+        if (i < 2 * k)
+            beta[i] = 1.0;
     }
     Context ctx = {.order = 2 * k + 1, .low_bound = -4.0, .up_bound = 4.0, .tol = -1.0, .alpha = &alpha[0], .beta = &beta[0]};
     EigenArray eigens;
     struct timeval start, end;
     gettimeofday(&start, NULL);
-    switch(option)
+    switch (option)
     {
     case 'a':
         eigens = solve_trimateigen(&ctx);
@@ -36,11 +39,11 @@ int main(int argc, char** argv)
     case 'c':
         eigens = solve_trimateigen_groups(groups, &ctx);
         break;
-    default :
+    default:
         eigens = solve_trimateigen(&ctx);
     }
     gettimeofday(&end, NULL);
-    double used_seconds = (double)((end.tv_sec  - start.tv_sec) * 1000000u + end.tv_usec - start.tv_usec) / 1.e6;
+    double used_seconds = (double)((end.tv_sec - start.tv_sec) * 1000000u + end.tv_usec - start.tv_usec) / 1.e6;
     //FILE* f = fopen("test.dat", "w+");
     //write_EigenArray(f, &eigens);
     //fclose(f);

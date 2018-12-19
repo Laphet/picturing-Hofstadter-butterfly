@@ -6,7 +6,6 @@ typedef struct OpenInterval
     double b;
 } OpenInterval;
 
-
 typedef struct DetEvl
 {
     double df;
@@ -14,18 +13,19 @@ typedef struct DetEvl
     int count;
 } DetEvl;
 
-
 void free_EigenArray(EigenArray *e)
 {
     free(e->data);
-    if (e->eigenvalue_index != NULL)free(e->eigenvalue_index);
+    if (e->eigenvalue_index != NULL)
+        free(e->eigenvalue_index);
 }
 
 void print_EigenArray(EigenArray *e)
 {
     int i;
     printf("\n");
-    for (i = 0; i < e->used_size; ++i) printf("%f  ", e->data[i]);
+    for (i = 0; i < e->used_size; ++i)
+        printf("%f  ", e->data[i]);
 }
 
 void write_EigenArray(FILE *f, EigenArray *e)
@@ -56,9 +56,15 @@ EigenArray get_merged_eigenvalues(EigenArray *a, EigenArray *b)
                 c[k++] = b->data[j++];
         }
     }
-    while (i < a->used_size) c[k++] = a->data[i++];
-    while (j < b->used_size) c[k++] = b->data[j++];
-    EigenArray output = {.total_size = a->used_size + b->used_size, .used_size = k, .data = c, .eigenvalue_index = NULL};
+    while (i < a->used_size)
+        c[k++] = a->data[i++];
+    while (j < b->used_size)
+        c[k++] = b->data[j++];
+    EigenArray output = {.total_size = a->used_size +
+                                       b->used_size,
+                         .used_size = k,
+                         .data = c,
+                         .eigenvalue_index = NULL};
     return output;
 }
 
@@ -68,17 +74,20 @@ int get_low_eigenvalues_count(double x, Context *ctx)
     int count = 0, i, n = ctx->order;
     double *alpha = ctx->alpha, *beta = ctx->beta, temp;
     xi = alpha[0] - x;
-    if (xi == 0.0) xi = beta[0] * beta[0] * EPSILON * EPSILON;
-    if (xi < 0.0) count += 1;
+    if (xi == 0.0)
+        xi = beta[0] * beta[0] * EPSILON * EPSILON;
+    if (xi < 0.0)
+        count += 1;
     for (i = 1; i < n; ++i)
     {
         temp = beta[i - 1] * beta[i - 1] / xi;
         xi = alpha[i] - x - temp;
-        if (xi == 0.0) xi = temp * EPSILON * EPSILON;
-        else if(xi < 0.0) count += 1;
+        if (xi == 0.0)
+            xi = temp * EPSILON * EPSILON;
+        else if (xi < 0.0)
+            count += 1;
     }
     return count;
-
 }
 
 DetEvl get_sturm_sequence(double x, Context *ctx)
@@ -87,10 +96,12 @@ DetEvl get_sturm_sequence(double x, Context *ctx)
     int count = 0, i, n = ctx->order;
     double *alpha = ctx->alpha, *beta = ctx->beta;
     xi = alpha[0] - x;
-    if (xi == 0.0) xi = beta[0] * beta[0] * EPSILON * EPSILON;
+    if (xi == 0.0)
+        xi = beta[0] * beta[0] * EPSILON * EPSILON;
     eta = 1.0 / xi;
     zeta = 0.0;
-    if (xi < 0.0) count++;
+    if (xi < 0.0)
+        count++;
     for (i = 1; i < n; ++i)
     {
         temp = beta[i - 1] * beta[i - 1] / xi;
@@ -107,10 +118,8 @@ DetEvl get_sturm_sequence(double x, Context *ctx)
         zeta_ = zeta;
         zeta = zeta_temp;
     }
-    return (DetEvl)
-    {
-        .df = eta, .d2f = zeta, .count = count
-    };
+    return (DetEvl){
+        .df = eta, .d2f = zeta, .count = count};
 }
 
 double get_laguerre_iteration(double x, int r, int is_positive, Context *ctx)
@@ -132,28 +141,33 @@ double get_ith_eigenvalue(int i, double x, Context *ctx)
     double temp;
     if (ctx->tol <= 0.0)
     {
-        double  max_beta_jj1 = fabs(beta[0]) + fabs(beta[1]);
+        double max_beta_jj1 = fabs(beta[0]) + fabs(beta[1]);
         for (j = 1; j < n - 3; ++j)
-            max_beta_jj1 = (fabs(beta[j]) + fabs(beta[j + 1]) > max_beta_jj1) ? fabs(beta[j] + fabs(beta[j + 1])) : max_beta_jj1;
+            max_beta_jj1 = (fabs(beta[j]) + fabs(beta[j + 1]) > max_beta_jj1) ? fabs(beta[j] + fabs(beta[j + 1]))
+                                                                              : max_beta_jj1;
         ctx->tol = (2.5 * max_beta_jj1 + fabs(x)) * EPSILON;
     }
 
     while (1)
     {
-        if (kappa_ == i) x = get_laguerre_iteration(x_, r, 1, ctx);
-        else if (kappa_ == i + 1) x = get_laguerre_iteration(x_, r, 0, ctx);
+        if (kappa_ == i)
+            x = get_laguerre_iteration(x_, r, 1, ctx);
+        else if (kappa_ == i + 1)
+            x = get_laguerre_iteration(x_, r, 0, ctx);
         else
         {
             printf("Warning: the start point is badly chosen, may result in obtaining incorrect eigenvalue, try jumping");
-            if (kappa_ > i + 1) x -= (ctx->up_bound - ctx->low_bound) / ctx->order * (kappa_ - i - 1);
-            else x += (ctx->up_bound - ctx->low_bound) / ctx->order * (i - kappa_);
+            if (kappa_ > i + 1)
+                x -= (ctx->up_bound - ctx->low_bound) / ctx->order * (kappa_ - i - 1);
+            else
+                x += (ctx->up_bound - ctx->low_bound) / ctx->order * (i - kappa_);
             continue;
         }
-        // printf("current x at %f\n", x);
         delta = fabs(x - x_);
         kappa = get_low_eigenvalues_count(x, ctx);
-        if (delta < ctx->tol || delta * delta / delta_ < ctx->tol ) break;
-        while(1)
+        if (delta < ctx->tol || delta * delta / delta_ < ctx->tol)
+            break;
+        while (1)
         {
             if (abs(kappa - kappa_) > 1)
             {
@@ -161,9 +175,9 @@ double get_ith_eigenvalue(int i, double x, Context *ctx)
                 temp = 0.5 * (x + x_);
                 x_ = x;
                 x = temp;
-                // printf("--inner jump to x at %f\n", x);
             }
-            else break;
+            else
+                break;
         }
         kappa_ = kappa;
         delta_ = delta;
@@ -178,7 +192,7 @@ OpenInterval get_interval(int i, EigenArray *lambdas_, Context *ctx)
     int k;
     if (lambdas_->eigenvalue_index == NULL)
     {
-        lambdas_->eigenvalue_index = (int *) malloc(lambdas_->used_size * sizeof(double));
+        lambdas_->eigenvalue_index = (int *)malloc(lambdas_->used_size * sizeof(double));
         for (k = 0; k < lambdas_->used_size; ++k)
             lambdas_->eigenvalue_index[k] = get_low_eigenvalues_count(lambdas_->data[k], ctx);
     }
@@ -186,19 +200,15 @@ OpenInterval get_interval(int i, EigenArray *lambdas_, Context *ctx)
     {
         a = ctx->low_bound - TOL;
         b = lambdas_->data[0];
-        return (OpenInterval)
-        {
-            .a = a, .b = b
-        };
+        return (OpenInterval){
+            .a = a, .b = b};
     }
-    else if (lambdas_->eigenvalue_index [lambdas_->used_size - 1] <= i)
+    else if (lambdas_->eigenvalue_index[lambdas_->used_size - 1] <= i)
     {
         a = lambdas_->data[lambdas_->used_size - 1];
         b = ctx->up_bound + TOL;
-        return (OpenInterval)
-        {
-            .a = a, .b = b
-        };
+        return (OpenInterval){
+            .a = a, .b = b};
     }
     else
     {
@@ -208,19 +218,14 @@ OpenInterval get_interval(int i, EigenArray *lambdas_, Context *ctx)
             {
                 a = lambdas_->data[k];
                 b = lambdas_->data[k + 1];
-                return (OpenInterval)
-                {
-                    .a = a, .b = b
-                };
+                return (OpenInterval){
+                    .a = a, .b = b};
             }
         }
     }
     printf("Error: cannot find an interval contains i-th eigenvalue, use default instead");
-    return (OpenInterval)
-    {
-        .a = ctx->low_bound - TOL, .b = ctx->up_bound + TOL
-    };
-
+    return (OpenInterval){
+        .a = ctx->low_bound - TOL, .b = ctx->up_bound + TOL};
 }
 
 void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
@@ -239,7 +244,7 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
         while (1)
         {
 
-            if  (fabs(interval.b - interval.a) > TOL)
+            if (fabs(interval.b - interval.a) > TOL)
             {
 
                 x = 0.5 * (interval.a + interval.b);
@@ -249,7 +254,7 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
                 else
                     interval.b = x;
                 if ((det_evl_output.count == i && det_evl_output.df > 0.0) ||
-                        ( det_evl_output.count == i + 1 && det_evl_output.df < 0.0))
+                    (det_evl_output.count == i + 1 && det_evl_output.df < 0.0))
                 {
                     eigens[i - index_low_bound] = get_ith_eigenvalue(i, x, ctx);
                     break;
@@ -261,9 +266,6 @@ void get_eigenvalues(EigenArray *lambdas_, Context *ctx)
                 break;
             }
         }
-        //int ID = omp_get_thread_num();
-        //printf("thread is %d\n", ID);
-
     }
     free_EigenArray(lambdas_);
     lambdas_->total_size = eigenvalues_count;
@@ -281,7 +283,7 @@ void get_eigenvalues_omp(EigenArray *lambdas_, Context *ctx)
     double *eigens = (double *)malloc(eigenvalues_count * sizeof(double));
     DetEvl det_evl_output;
     OpenInterval interval;
-    #pragma omp parallel for
+#pragma omp parallel for
     for (i = index_low_bound; i < index_up_bound; ++i)
     {
         double x;
@@ -289,7 +291,7 @@ void get_eigenvalues_omp(EigenArray *lambdas_, Context *ctx)
         while (1)
         {
 
-            if  (fabs(interval.b - interval.a) > TOL)
+            if (fabs(interval.b - interval.a) > TOL)
             {
 
                 x = 0.5 * (interval.a + interval.b);
@@ -299,7 +301,7 @@ void get_eigenvalues_omp(EigenArray *lambdas_, Context *ctx)
                 else
                     interval.b = x;
                 if ((det_evl_output.count == i && det_evl_output.df > 0.0) ||
-                        ( det_evl_output.count == i + 1 && det_evl_output.df < 0.0))
+                    (det_evl_output.count == i + 1 && det_evl_output.df < 0.0))
                 {
                     eigens[i - index_low_bound] = get_ith_eigenvalue(i, x, ctx);
                     break;
@@ -326,10 +328,8 @@ EigenArray solve_trimateigen(Context *ctx)
     {
         eigens = (double *)malloc(sizeof(double));
         eigens[0] = ctx->alpha[0];
-        return (EigenArray)
-        {
-            .total_size = 1, .used_size = 1, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = 1, .used_size = 1, .data = eigens, .eigenvalue_index = NULL};
     }
     if (ctx->order == 2)
     {
@@ -337,36 +337,26 @@ EigenArray solve_trimateigen(Context *ctx)
         eigens = (double *)malloc(2 * sizeof(double));
         eigens[0] = 0.5 * (a0 + a1) - 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
         eigens[1] = 0.5 * (a0 + a1) + 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
-        return (EigenArray)
-        {
-            .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL};
     }
     if (3 <= ctx->order && ctx->order <= LAPACK_SOLVER_ORDER)
     {
         eigens = (double *)malloc(sizeof(double) * ctx->order);
         double *off_diagonal = (double *)malloc(sizeof(double) * (ctx->order - 1));
         memcpy(eigens, ctx->alpha, ctx->order * sizeof(double));
-        memcpy(off_diagonal, ctx->beta, (ctx->order - 1)*sizeof(double));
+        memcpy(off_diagonal, ctx->beta, (ctx->order - 1) * sizeof(double));
         LAPACKE_dsterf(ctx->order, eigens, off_diagonal);
-        return (EigenArray)
-        {
-            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL};
     }
     if (ctx->order > LAPACK_SOLVER_ORDER)
     {
         int n = ctx->order;
         Context ctx_child0 =
-        {
-            .order = n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
-            .alpha = &ctx->alpha[0],
-            .beta = n / 2 > 1 ? &ctx->beta[0] : NULL
-        };
-        Context ctx_child1 = {.order = n - n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
-                              .alpha = &ctx->alpha[n / 2],
-                              .beta = &ctx->beta[n / 2]
-                             };
+            {
+                .order = n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0, .alpha = &ctx->alpha[0], .beta = n / 2 > 1 ? &ctx->beta[0] : NULL};
+        Context ctx_child1 = {.order = n - n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0, .alpha = &ctx->alpha[n / 2], .beta = &ctx->beta[n / 2]};
         EigenArray lambda0 = solve_trimateigen(&ctx_child0);
         EigenArray lambda1 = solve_trimateigen(&ctx_child1);
         EigenArray lambdas_ = get_merged_eigenvalues(&lambda0, &lambda1);
@@ -376,10 +366,8 @@ EigenArray solve_trimateigen(Context *ctx)
         return lambdas_;
     }
     printf("Error: ~");
-    return (EigenArray)
-    {
-        .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL
-    };
+    return (EigenArray){
+        .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL};
 }
 
 EigenArray solve_trimateigen_omp(Context *ctx)
@@ -389,10 +377,8 @@ EigenArray solve_trimateigen_omp(Context *ctx)
     {
         eigens = (double *)malloc(sizeof(double));
         eigens[0] = ctx->alpha[0];
-        return (EigenArray)
-        {
-            .total_size = 1, .used_size = 1, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = 1, .used_size = 1, .data = eigens, .eigenvalue_index = NULL};
     }
     if (ctx->order == 2)
     {
@@ -400,36 +386,26 @@ EigenArray solve_trimateigen_omp(Context *ctx)
         eigens = (double *)malloc(2 * sizeof(double));
         eigens[0] = 0.5 * (a0 + a1) - 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
         eigens[1] = 0.5 * (a0 + a1) + 0.5 * sqrt(4.0 * b0 * b0 + (a0 - a1) * (a0 - a1));
-        return (EigenArray)
-        {
-            .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = 2, .used_size = 2, .data = eigens, .eigenvalue_index = NULL};
     }
     if (3 <= ctx->order && ctx->order <= LAPACK_SOLVER_ORDER)
     {
         eigens = (double *)malloc(sizeof(double) * ctx->order);
         double *off_diagonal = (double *)malloc(sizeof(double) * (ctx->order - 1));
         memcpy(eigens, ctx->alpha, ctx->order * sizeof(double));
-        memcpy(off_diagonal, ctx->beta, (ctx->order - 1)*sizeof(double));
+        memcpy(off_diagonal, ctx->beta, (ctx->order - 1) * sizeof(double));
         LAPACKE_dsterf(ctx->order, eigens, off_diagonal);
-        return (EigenArray)
-        {
-            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL
-        };
+        return (EigenArray){
+            .total_size = ctx->order, .used_size = ctx->order, .data = eigens, .eigenvalue_index = NULL};
     }
     if (ctx->order > LAPACK_SOLVER_ORDER)
     {
         int n = ctx->order;
         Context ctx_child0 =
-        {
-            .order = n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
-            .alpha = &ctx->alpha[0],
-            .beta = n / 2 > 1 ? &ctx->beta[0] : NULL
-        };
-        Context ctx_child1 = {.order = n - n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0,
-                              .alpha = &ctx->alpha[n / 2],
-                              .beta = &ctx->beta[n / 2]
-                             };
+            {
+                .order = n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0, .alpha = &ctx->alpha[0], .beta = n / 2 > 1 ? &ctx->beta[0] : NULL};
+        Context ctx_child1 = {.order = n - n / 2, .low_bound = ctx->low_bound, .up_bound = ctx->up_bound, .tol = -1.0, .alpha = &ctx->alpha[n / 2], .beta = &ctx->beta[n / 2]};
         EigenArray lambda0 = solve_trimateigen(&ctx_child0);
         EigenArray lambda1 = solve_trimateigen(&ctx_child1);
         EigenArray lambdas_ = get_merged_eigenvalues(&lambda0, &lambda1);
@@ -439,8 +415,6 @@ EigenArray solve_trimateigen_omp(Context *ctx)
         return lambdas_;
     }
     printf("Error: ~");
-    return (EigenArray)
-    {
-        .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL
-    };
+    return (EigenArray){
+        .total_size = 0, .used_size = 1, .data = NULL, .eigenvalue_index = NULL};
 }
